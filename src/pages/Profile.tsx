@@ -1,16 +1,17 @@
-import { Package, MessageSquare, HeartHandshake, Eye } from 'lucide-react';
-import type { CommunityPost, Resource } from '@/types';
-import { CURRENT_USER_ID, USER_MAP } from '@/lib/seed';
+import { Package, MessageSquare, HeartHandshake, Eye, Instagram, Mail, MessageCircle } from 'lucide-react';
+import type { CommunityPost, ContactMethodId, Resource } from '@/types';
+import { CURRENT_USER_ID, DEMO_CONTACT_DETAILS, USER_MAP } from '@/lib/seed';
 import { CATEGORY_MAP } from '@/lib/utils';
 import { Avatar } from '@/components/Avatar';
-import { AvailabilityBadge } from '@/components/Badges';
 import { ResourceCard } from '@/components/ResourceCard';
+import { prefsForUser, type Store } from '@/lib/store';
 
 interface Props {
   resources: Resource[];
   posts: CommunityPost[];
   contactedResourceIds: string[];
   helpedPostIds: string[];
+  store: Store;
   onOpenResource: (id: string) => void;
   onOpenPost: (id: string) => void;
 }
@@ -20,6 +21,7 @@ export function Profile({
   posts,
   contactedResourceIds,
   helpedPostIds,
+  store,
   onOpenResource,
   onOpenPost,
 }: Props) {
@@ -27,6 +29,8 @@ export function Profile({
   const myResources = resources.filter((r) => r.contributorId === CURRENT_USER_ID);
   const myPosts = posts.filter((p) => p.authorId === CURRENT_USER_ID);
   const helpedCount = helpedPostIds.length;
+  const prefs = prefsForUser(store.contactPreferences, CURRENT_USER_ID);
+  const demoDetails = DEMO_CONTACT_DETAILS[CURRENT_USER_ID];
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-8">
@@ -63,6 +67,42 @@ export function Profile({
           </div>
         </div>
       </div>
+
+      {/* Contact Preferences */}
+      <section className="mt-8">
+        <h2 className="flex items-center gap-2 text-lg font-bold text-ink-900">
+          <MessageCircle size={18} className="text-brand-500" /> Contact Preferences
+        </h2>
+        <p className="mt-1 text-sm text-ink-500">
+          Choose how other students can reach you about a resource or urgent-help request. Everything is off until you turn it on. Demo values only — no real personal info.
+        </p>
+        <div className="mt-4 space-y-3">
+          <PreferenceRow
+            icon={<MessageCircle size={16} />}
+            label="WhatsApp"
+            method="whatsapp"
+            enabled={prefs.whatsapp}
+            preview={demoDetails?.whatsapp.display}
+            onToggle={store.setContactPreference}
+          />
+          <PreferenceRow
+            icon={<Instagram size={16} />}
+            label="Instagram"
+            method="instagram"
+            enabled={prefs.instagram}
+            preview={demoDetails?.instagram.display}
+            onToggle={store.setContactPreference}
+          />
+          <PreferenceRow
+            icon={<Mail size={16} />}
+            label="Email"
+            method="email"
+            enabled={prefs.email}
+            preview={demoDetails?.email.display}
+            onToggle={store.setContactPreference}
+          />
+        </div>
+      </section>
 
       {/* My Resources */}
       <section className="mt-8">
@@ -139,6 +179,52 @@ function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; va
       <div className="flex items-center justify-center text-brand-500">{icon}</div>
       <p className="mt-1 text-xl font-extrabold text-ink-900">{value}</p>
       <p className="text-xs text-ink-500">{label}</p>
+    </div>
+  );
+}
+
+function PreferenceRow({
+  icon,
+  label,
+  method,
+  enabled,
+  preview,
+  onToggle,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  method: ContactMethodId;
+  enabled: boolean;
+  preview?: string;
+  onToggle: (method: ContactMethodId, enabled: boolean) => void;
+}) {
+  return (
+    <div className="flex items-center gap-3 rounded-2xl bg-white p-4 shadow-soft ring-1 ring-brand-100">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
+        {icon}
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-bold text-ink-900">{label}</p>
+        <p className="truncate text-xs text-ink-400">
+          {enabled ? preview : 'Off · not shared'}
+        </p>
+      </div>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={enabled}
+        aria-label={`${enabled ? 'Disable' : 'Enable'} ${label}`}
+        onClick={() => onToggle(method, !enabled)}
+        className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${
+          enabled ? 'bg-brand-500' : 'bg-brand-200'
+        }`}
+      >
+        <span
+          className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow-soft transition-transform ${
+            enabled ? 'translate-x-5' : 'translate-x-0.5'
+          }`}
+        />
+      </button>
     </div>
   );
 }

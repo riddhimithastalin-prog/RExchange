@@ -1,3 +1,11 @@
+export type ContactMethodId = 'whatsapp' | 'instagram' | 'email';
+
+export interface ContactPreferences {
+  whatsapp: boolean;
+  instagram: boolean;
+  email: boolean;
+}
+
 export type Category = 'books' | 'electronics' | 'events' | 'giveaway';
 
 export type Availability = 'sale' | 'rent' | 'lending' | 'free' | 'online';

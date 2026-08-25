@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import type { Comment, CommunityPost, HelpOffer, Resource } from '@/types';
-import { CURRENT_USER_ID, SEED_POSTS, SEED_RESOURCES } from '@/lib/seed';
+import type { Comment, CommunityPost, ContactMethodId, ContactPreferences, HelpOffer, Resource } from '@/types';
+import { CURRENT_USER_ID, DEFAULT_CONTACT_PREFERENCES, SEED_POSTS, SEED_RESOURCES } from '@/lib/seed';
 import { uid } from '@/lib/utils';
 
 const KEY = 'rexchange_state_v2';
@@ -10,24 +10,41 @@ interface PersistState {
   posts: CommunityPost[];
   contactedResourceIds: string[];
   helpedPostIds: string[];
+  contactPreferences: Record<string, ContactPreferences>;
 }
+
+const EMPTY_STATE: PersistState = {
+  resources: SEED_RESOURCES,
+  posts: SEED_POSTS,
+  contactedResourceIds: [],
+  helpedPostIds: [],
+  contactPreferences: {},
+};
 
 function load(): PersistState {
   try {
     const raw = localStorage.getItem(KEY);
     if (raw) {
       const parsed = JSON.parse(raw) as PersistState;
-      if (parsed.resources && parsed.posts) return parsed;
+      if (parsed.resources && parsed.posts) {
+        return {
+          ...EMPTY_STATE,
+          ...parsed,
+          contactPreferences: parsed.contactPreferences ?? {},
+        };
+      }
     }
   } catch {
     // ignore
   }
-  return {
-    resources: SEED_RESOURCES,
-    posts: SEED_POSTS,
-    contactedResourceIds: [],
-    helpedPostIds: [],
-  };
+  return EMPTY_STATE;
+}
+
+export function prefsForUser(
+  map: Record<string, ContactPreferences>,
+  userId: string,
+): ContactPreferences {
+  return { ...DEFAULT_CONTACT_PREFERENCES, ...map[userId] };
 }
 
 export function useStore() {
@@ -126,16 +143,31 @@ export function useStore() {
     }));
   }, []);
 
+  const setContactPreference = useCallback((method: ContactMethodId, enabled: boolean) => {
+    setState((s) => ({
+      ...s,
+      contactPreferences: {
+        ...s.contactPreferences,
+        [CURRENT_USER_ID]: {
+          ...prefsForUser(s.contactPreferences, CURRENT_USER_ID),
+          [method]: enabled,
+        },
+      },
+    }));
+  }, []);
+
   return {
     resources: state.resources,
     posts: state.posts,
     contactedResourceIds: state.contactedResourceIds,
     helpedPostIds: state.helpedPostIds,
+    contactPreferences: state.contactPreferences,
     addResource,
     addPost,
     addComment,
     addHelpOffer,
     contactContributor,
+    setContactPreference,
   };
 }
 

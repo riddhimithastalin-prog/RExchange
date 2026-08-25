@@ -1,4 +1,4 @@
-import type { CommunityPost, Resource, User } from '@/types';
+import type { CommunityPost, ContactMethodId, ContactPreferences, Resource, User } from '@/types';
 
 export const CURRENT_USER_ID = 'u_guest';
 
@@ -54,6 +54,52 @@ export const USER_MAP: Record<string, User> = USERS.reduce(
   (acc, u) => ({ ...acc, [u.id]: u }),
   {} as Record<string, User>,
 );
+
+export const DEFAULT_CONTACT_PREFERENCES: ContactPreferences = {
+  whatsapp: false,
+  instagram: false,
+  email: false,
+};
+
+export interface DemoContactDetail {
+  id: ContactMethodId;
+  label: string;
+  display: string;
+  href: string;
+}
+
+/** Fake handles only — never real personal contact info. */
+export const DEMO_CONTACT_DETAILS: Record<string, Record<ContactMethodId, DemoContactDetail>> = {
+  [CURRENT_USER_ID]: {
+    whatsapp: {
+      id: 'whatsapp',
+      label: 'WhatsApp',
+      display: '+91 90000 00000 (demo)',
+      href: 'https://wa.me/919000000000',
+    },
+    instagram: {
+      id: 'instagram',
+      label: 'Instagram',
+      display: '@rexchange.guest (demo)',
+      href: 'https://www.instagram.com/rexchange.guest',
+    },
+    email: {
+      id: 'email',
+      label: 'Email',
+      display: 'guest.student@srm-demo.example',
+      href: 'mailto:guest.student@srm-demo.example',
+    },
+  },
+};
+
+export function getSharedContactMethods(
+  userId: string,
+  prefs: ContactPreferences,
+): DemoContactDetail[] {
+  const details = DEMO_CONTACT_DETAILS[userId];
+  if (!details) return [];
+  return (['whatsapp', 'instagram', 'email'] as const).filter((id) => prefs[id]).map((id) => details[id]);
+}
 
 const now = Date.now();
 const hour = 3600_000;

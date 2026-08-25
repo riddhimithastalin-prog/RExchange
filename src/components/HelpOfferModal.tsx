@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { HeartHandshake, Send } from 'lucide-react';
 import { Modal } from '@/components/Modal';
 import { useToast } from '@/components/Toast';
-import type { Store } from '@/lib/store';
+import { ContactOptions } from '@/components/ContactOptions';
+import { getSharedContactMethods } from '@/lib/seed';
+import { prefsForUser, type Store } from '@/lib/store';
 
 interface Props {
   open: boolean;
@@ -15,6 +17,15 @@ export function HelpOfferModal({ open, onClose, postId, store }: Props) {
   const [message, setMessage] = useState('');
   const [sent, setSent] = useState(false);
   const { toast } = useToast();
+
+  const methods = useMemo(() => {
+    const post = store.posts.find((p) => p.id === postId);
+    if (!post) return [];
+    return getSharedContactMethods(
+      post.authorId,
+      prefsForUser(store.contactPreferences, post.authorId),
+    );
+  }, [postId, store.posts, store.contactPreferences]);
 
   const send = () => {
     store.addHelpOffer(postId, message.trim());
@@ -43,12 +54,21 @@ export function HelpOfferModal({ open, onClose, postId, store }: Props) {
           </div>
           <h3 className="text-xl font-bold text-ink-900">You offered to help! 🙌</h3>
           <p className="text-sm text-ink-500 max-w-xs">The student will see your offer. That's the RExchange spirit.</p>
+          <ContactOptions
+            methods={methods}
+            emptyHint="No phone numbers or IDs are ever shared."
+          />
         </div>
       ) : (
         <div className="space-y-4">
           <p className="text-sm text-ink-600">
-            Let them know you can help. You can add a short message — no contact info is shared.
+            Let them know you can help. You can add a short message
+            {methods.length === 0 ? ' — no contact info is shared.' : '.'}
           </p>
+          <ContactOptions
+            methods={methods}
+            emptyHint="No phone numbers or IDs are ever shared."
+          />
           <textarea
             value={message}
             onChange={(e) => setMessage(e.target.value)}

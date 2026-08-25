@@ -1,17 +1,27 @@
-import { CheckCircle2, MessageCircle } from 'lucide-react';
+import { CheckCircle2 } from 'lucide-react';
 import { Modal } from '@/components/Modal';
 import { Avatar } from '@/components/Avatar';
-import { USER_MAP } from '@/lib/seed';
+import { ContactOptions } from '@/components/ContactOptions';
+import { getSharedContactMethods, USER_MAP } from '@/lib/seed';
+import { prefsForUser, type Store } from '@/lib/store';
 import type { Resource } from '@/types';
 
 interface Props {
   open: boolean;
   onClose: () => void;
   resource: Resource | null;
+  store: Store;
 }
 
-export function ContactModal({ open, onClose, resource }: Props) {
+export function ContactModal({ open, onClose, resource, store }: Props) {
   const contributor = resource ? USER_MAP[resource.contributorId] : null;
+  const methods =
+    resource
+      ? getSharedContactMethods(
+          resource.contributorId,
+          prefsForUser(store.contactPreferences, resource.contributorId),
+        )
+      : [];
 
   return (
     <Modal open={open} onClose={onClose} maxWidth="max-w-md">
@@ -35,9 +45,10 @@ export function ContactModal({ open, onClose, resource }: Props) {
             </div>
           </div>
         )}
-        <div className="mt-2 flex items-center gap-1.5 text-xs text-ink-400">
-          <MessageCircle size={13} /> No phone numbers or IDs are ever shared.
-        </div>
+        <ContactOptions
+          methods={methods}
+          emptyHint="No phone numbers or IDs are ever shared."
+        />
         <button
           onClick={onClose}
           className="mt-3 rounded-full bg-white px-6 py-2.5 text-sm font-semibold text-ink-700 ring-1 ring-brand-100 transition-colors hover:bg-brand-50"

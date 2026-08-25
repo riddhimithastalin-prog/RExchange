@@ -162,6 +162,7 @@ function AppInner() {
             posts={store.posts}
             contactedResourceIds={store.contactedResourceIds}
             helpedPostIds={store.helpedPostIds}
+            store={store}
             onOpenResource={openResource}
             onOpenPost={openPost}
           />
@@ -249,6 +250,7 @@ function AppInner() {
         open={!!contactResourceId}
         onClose={() => setContactResourceId(null)}
         resource={contactResource}
+        store={store}
       />
     </div>
   );
